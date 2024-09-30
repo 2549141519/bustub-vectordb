@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <assert.h>
 
 #include "catalog/schema.h"
 #include "execution/expressions/abstract_expression.h"
@@ -23,15 +24,33 @@ inline auto ComputeDistance(const std::vector<double> &left, const std::vector<d
   switch (dist_fn) {
     case VectorExpressionType::L2Dist: {
       // IMPLEMENT ME
-      return 0.0;
+      double distance = 0.0;
+      assert(left.size() == right.size());
+      for(auto i = 0; i < left.size(); i++) {
+        distance += pow(left[i] - right[i], 2);
+      }
+      return sqrt(distance);
     }
     case VectorExpressionType::InnerProduct: {
       // IMPLEMENT ME
-      return 1.0;
+      double distance = 0.0;
+      for(auto i = 0; i < left.size(); i++) {
+        distance += left[i] * right[i];
+      }
+      return -1.0 * distance;
     }
     case VectorExpressionType::CosineSimilarity: {
       // IMPLEMENT ME
-      return 2.0;
+      double distance = 0.0;
+      double left_distance = 0.0;
+      double right_distance = 0.0;
+      assert(left.size() == right.size());
+      for(auto i = 0; i < left.size(); i++) {
+        distance += left[i] * right[i];
+        left_distance += pow(left[i], 2);
+        right_distance += pow(right[i], 2);
+      }
+      return 1 - distance/sqrt(left_distance * right_distance);
     }
     default:
       BUSTUB_ASSERT(false, "Unsupported vector expr type.");
