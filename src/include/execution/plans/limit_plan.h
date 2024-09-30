@@ -49,7 +49,7 @@ class LimitPlanNode : public AbstractPlanNode {
 
   /** The limit */
   std::size_t limit_;
-
+ 
  protected:
   auto PlanNodeToString() const -> std::string override;
 };

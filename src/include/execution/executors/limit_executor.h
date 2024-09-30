@@ -48,7 +48,9 @@ class LimitExecutor : public AbstractExecutor {
   /** @return The output schema for the limit */
   auto GetOutputSchema() const -> const Schema & override { return plan_->OutputSchema(); };
 
+  int limit = 0;
  private:
+  
   /** The limit plan node to be executed */
   const LimitPlanNode *plan_;
 
