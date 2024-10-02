@@ -56,12 +56,16 @@ void TopNExecutor::Init() {
     }
     
     // 迭代器初始化
-    iter_ = tuples.begin();
+    iter_ = tuples.rbegin();
 }
 
 auto TopNExecutor::Next(Tuple *tuple, RID *rid) -> bool {
-    if(limit++ < plan_->GetN() && child_executor_->Next(tuple, rid))
+    if(limit++ < plan_->GetN() && iter_ != tuples.rend()) {
+        *tuple = iter_->second;
+        *rid = iter_->first;
+        iter_++;
         return true;
+    }
     return false;
 }
 

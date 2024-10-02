@@ -66,7 +66,7 @@ class TopNExecutor : public AbstractExecutor {
 
   std::vector<std::pair<RID,Tuple>> tuples;
 
-  std::vector<std::pair<RID, Tuple>>::iterator iter_;
+  std::vector<std::pair<RID, Tuple>>::const_reverse_iterator iter_;
 
   size_t limit = 0;
 };

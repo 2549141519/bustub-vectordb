@@ -39,7 +39,7 @@ class TopNPlanNode : public AbstractPlanNode {
    */
   TopNPlanNode(SchemaRef output, AbstractPlanNodeRef child,
                std::vector<std::pair<OrderByType, AbstractExpressionRef>> order_bys, std::size_t n)
-      : AbstractPlanNode(std::move(output), {std::move(child)}), order_bys_(std::move(order_bys)), n_{n} {}
+      : AbstractPlanNode(std::move(output), child ? std::vector<AbstractPlanNodeRef>{std::move(child)} : std::vector<AbstractPlanNodeRef>{}), order_bys_(std::move(order_bys)), n_{n} {}
 
   /** @return The type of the plan node */
   auto GetType() const -> PlanType override { return PlanType::TopN; }

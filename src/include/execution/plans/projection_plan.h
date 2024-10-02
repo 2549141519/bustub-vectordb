@@ -37,7 +37,8 @@ class ProjectionPlanNode : public AbstractPlanNode {
    * @param child The child plan node
    */
   ProjectionPlanNode(SchemaRef output, std::vector<AbstractExpressionRef> expressions, AbstractPlanNodeRef child)
-      : AbstractPlanNode(std::move(output), {std::move(child)}), expressions_(std::move(expressions)) {}
+       : AbstractPlanNode(std::move(output), child ? std::vector<AbstractPlanNodeRef>{std::move(child)} : std::vector<AbstractPlanNodeRef>{}),
+         expressions_(std::move(expressions)) {}
 
   /** @return The type of the plan node */
   auto GetType() const -> PlanType override { return PlanType::Projection; }
