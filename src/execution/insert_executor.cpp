@@ -22,12 +22,13 @@ InsertExecutor::InsertExecutor(ExecutorContext *exec_ctx, const InsertPlanNode *
     : AbstractExecutor(exec_ctx),  // 初始化基类 AbstractExecutor
       plan_(plan),                 // 初始化 InsertPlanNode
       child_executor_(std::move(child_executor))  // 初始化子执行器
-{
+{   
     // 初始化表堆
     table_heap_ = exec_ctx->GetCatalog()->GetTable(plan->GetTableOid())->table_.get();
    
     // 初始化表的向量索引
-    //indexes_ = exec_ctx->GetCatalog()->GetIndex();
+    /////////////////////////
+    
     
     // 初始化状态变量
     emitted_ = false;
@@ -50,6 +51,15 @@ auto InsertExecutor::Next(Tuple *tuple, RID *rid) -> bool {
                 // 调用 InsertTuple，传递所有必要的参数：元数据、元组、锁管理器、事务、表 OID
                 auto inserted_rid = table_heap_->InsertTuple(tuple_meta, *tuple, lock_mgr, txn, table_oid);
                 if (inserted_rid.has_value()) {
+                    auto table_indexes = exec_ctx_->GetCatalog()->GetTableIndexes(
+                        exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->name_);
+                    *rid = inserted_rid.value();
+                    for (auto &index_info : table_indexes) {
+                        // 插入到索引中
+                            auto vector_index = dynamic_cast<IVFFlatIndex*>(index_info->index_.get());
+                            vector_index->InsertVectorEntry(tuple->GetValue(&child_executor_->GetOutputSchema(),0).GetVector(), *rid);
+                    }
+                    
                     return true;
                 }
                 return false;

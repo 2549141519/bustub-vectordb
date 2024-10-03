@@ -22,6 +22,7 @@ auto ValuesExecutor::Next(Tuple *tuple, RID *rid) -> bool {
 
   *tuple = Tuple{values, &GetOutputSchema()};
   cursor_ += 1;
+  
 
   return true;
 }

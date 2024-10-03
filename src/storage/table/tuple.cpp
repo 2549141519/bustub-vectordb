@@ -68,6 +68,14 @@ auto Tuple::GetValue(const Schema *schema, const uint32_t column_idx) const -> V
   return Value::DeserializeFrom(data_ptr, column_type);
 }
 
+auto Tuple::GetValue2(const Schema *schema, const uint32_t column_idx) const -> Value {
+  assert(schema);
+  const TypeId column_type = TypeId::VECTOR;
+  const char *data_ptr = GetDataPtr(schema, column_idx);
+  // the third parameter "is_inlined" is unused
+  return Value::DeserializeFrom(data_ptr, column_type);
+}
+
 auto Tuple::KeyFromTuple(const Schema &schema, const Schema &key_schema, const std::vector<uint32_t> &key_attrs)
     -> Tuple {
   std::vector<Value> values;

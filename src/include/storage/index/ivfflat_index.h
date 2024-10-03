@@ -20,7 +20,6 @@ class IVFFlatIndex : public VectorIndex {
   void BuildIndex(std::vector<std::pair<std::vector<double>, RID>> initial_data) override;
   auto ScanVectorKey(const std::vector<double> &base_vector, size_t limit) -> std::vector<RID> override;
   void InsertVectorEntry(const std::vector<double> &key, RID rid) override;
-
   BufferPoolManager *bpm_;
   // number of buckets or lists to create when building the index
   size_t lists_{0};
@@ -34,6 +33,9 @@ class IVFFlatIndex : public VectorIndex {
 
   // vectors and RIDs in each of the centroid list
   std::vector<std::vector<std::pair<Vector, RID>>> centroids_buckets_;
+private:
+  std::vector<Vector> RandomSample(const std::vector<std::pair<Vector, RID>> &data, size_t num_samples);
+  std::vector<size_t> FindNearestCentroids(const std::vector<double> &base_vector, size_t num_centroids);
 };
 
 }  // namespace bustub
