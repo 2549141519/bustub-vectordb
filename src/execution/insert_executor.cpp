@@ -56,8 +56,14 @@ auto InsertExecutor::Next(Tuple *tuple, RID *rid) -> bool {
                     *rid = inserted_rid.value();
                     for (auto &index_info : table_indexes) {
                         // 插入到索引中
+                        if(index_info->index_type_ == IndexType::VectorIVFFlatIndex) {
                             auto vector_index = dynamic_cast<IVFFlatIndex*>(index_info->index_.get());
                             vector_index->InsertVectorEntry(tuple->GetValue(&child_executor_->GetOutputSchema(),0).GetVector(), *rid);
+                        }
+                        else if(index_info->index_type_ == IndexType::VectorHNSWIndex) {
+                            auto vector_index = dynamic_cast<HNSWIndex*>(index_info->index_.get());
+                            vector_index->InsertVectorEntry(tuple->GetValue(&child_executor_->GetOutputSchema(),0).GetVector(), *rid);
+                        }   
                     }
                     
                     return true;
