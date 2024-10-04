@@ -214,20 +214,74 @@ void HNSWIndex::BuildIndex(std::vector<std::pair<std::vector<double>, RID>> init
     InsertVectorEntry(vec, rid);
   }
 }
+int HNSWIndex::GenerateRandomLevel() {
+    // 生成 [0, 1] 范围内均匀分布的随机数
+    std::uniform_real_distribution<> uniform_dist(0.0, 1.0);
+    double random_value = uniform_dist(generator_);  // 使用 generator_ 生成随机数
+
+    // 根据公式计算插入的层级
+    int level = static_cast<int>(-std::log(random_value) * m_l_);
+
+    return level;  // 返回生成的层级
+}
+
 
 auto HNSWIndex::ScanVectorKey(const std::vector<double> &base_vector, size_t limit) -> std::vector<RID> {
-  auto vertex_ids = layers_[0].SearchLayer(base_vector, limit, {layers_[0].DefaultEntryPoint()});
+  std::vector<size_t> entry_points = {layers_.rbegin()->DefaultEntryPoint()};
+  int i = layers_.size() - 1;
+  while(i > 0) {
+    entry_points = layers_[i--].SearchLayer(base_vector, limit, entry_points);
+  }
+  entry_points = layers_[0].SearchLayer(base_vector, limit, entry_points);
   std::vector<RID> result;
-  result.reserve(vertex_ids.size());
-  for (const auto &id : vertex_ids) {
+  result.reserve(entry_points.size());
+  for (const auto &id : entry_points) {
     result.push_back(rids_[id]);
   }
   return result;
 }
 
 void HNSWIndex::InsertVectorEntry(const std::vector<double> &key, RID rid) {
-  auto id = AddVertex(key, rid);
-  layers_[0].Insert(key, id, ef_construction_, m_);
+  std::uniform_real_distribution<double> level_dist(0.0, 1.0);
+  auto vertex_id = AddVertex(key, rid);
+  int target_level = static_cast<int>(std::floor(-std::log(level_dist(generator_)) * m_l_));
+  
+  std::vector<size_t> nearest_elements;
+  if (!layers_[0].in_vertices_.empty()) {
+    std::vector<size_t> entry_points{layers_[layers_.size() - 1].DefaultEntryPoint()};
+    int level = layers_.size() - 1;
+    for (; level > target_level; level--) {
+      nearest_elements = layers_[level].SearchLayer(key, ef_search_, entry_points);
+      nearest_elements = SelectNeighbors(key, nearest_elements, *vertices_, 1, distance_fn_);
+      entry_points = {nearest_elements[0]};
+    }
+    for (; level >= 0; level--) {
+      auto &layer = layers_[level];
+      nearest_elements = layer.SearchLayer(key, ef_construction_, entry_points);
+      auto neighbors = SelectNeighbors(key, nearest_elements, *vertices_, m_, distance_fn_);
+      layer.AddVertex(vertex_id);
+      for (const auto neighbor : neighbors) {
+        layer.Connect(vertex_id, neighbor);
+      }
+      for (const auto neighbor : neighbors) {
+        auto &edges = layer.edges_[neighbor];
+        if (edges.size() > m_max_) {
+          auto new_neighbors = SelectNeighbors((*vertices_)[neighbor], edges, *vertices_, layer.m_max_, distance_fn_);
+          edges = new_neighbors;
+        }
+      }
+      entry_points = nearest_elements;
+    }
+  } else {
+    layers_[0].AddVertex(vertex_id);
+  }
+  while (static_cast<int>(layers_.size()) <= target_level) {
+    auto layer = NSW{*vertices_, distance_fn_, m_max_};
+    layer.AddVertex(vertex_id);
+    layers_.emplace_back(std::move(layer));
+  }
+
+  
 }
 
 }  // namespace bustub

@@ -55,7 +55,7 @@ class HNSWIndex : public VectorIndex {
   void InsertVectorEntry(const std::vector<double> &key, RID rid) override;
 
   auto AddVertex(const std::vector<double> &vec, RID rid) -> size_t;
-
+  int GenerateRandomLevel();
   using Vector = std::vector<double>;
   std::unique_ptr<std::vector<Vector>> vertices_;
   std::vector<RID> rids_;
